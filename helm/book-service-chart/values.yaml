@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: your-docker-registry-or-dockerhub-username/book-service # This will be overridden by Jenkinsfile
+  pullPolicy: IfNotPresent
+  tag: "latest" # This will be overridden by Jenkinsfile
+
+service:
+  type: ClusterIP
+  port: 8080 # Spring Boot default port
+
+db: # Database connection details, overridden by Jenkinsfile
+  host: ""
+  port: "5432"
+  name: ""
+  user: ""
+  password: ""
+
+resources: {}
+  # limits:
+  #   cpu: 200m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 256Mi

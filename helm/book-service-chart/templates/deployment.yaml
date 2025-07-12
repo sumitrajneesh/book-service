@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "book-service-chart.fullname" . }}
+  labels:
+    {{- include "book-service-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "book-service-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "book-service-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            # Inject database connection details from Helm values
+            - name: DB_HOST
+              value: {{ .Values.db.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.db.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.db.name | quote }}
+            - name: DB_USER
+              value: {{ .Values.db.user | quote }}
+            # IMPORTANT: For production, use a Kubernetes Secret for passwords!
+            # You would create a Secret like this:
+            # apiVersion: v1
+            # kind: Secret
+            # metadata:
+            #   name: book-db-secret
+            # stringData:
+            #   DB_PASSWORD: "your_strong_password"
+            # And then reference it here:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: book-db-secret # Name of the Kubernetes Secret
+                  key: DB_PASSWORD    # Key within the Secret
+          livenessProbe:
+            httpGet:
+              path: /api/books/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/books/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
