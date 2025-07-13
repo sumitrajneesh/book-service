@@ -178,4 +178,4 @@ pipeline {
             echo "Pipeline for ${env.JOB_NAME} on branch ${env.BRANCH_NAME} succeeded!"
         }
     }
-}
+
