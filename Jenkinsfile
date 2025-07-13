@@ -44,8 +44,25 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def serviceName = env.JOB_NAME.toLowerCase().replace('-pipeline', '')
-                    def imageTag = "${env.BRANCH_NAME == 'main' ? 'latest' : env.BRANCH_NAME}-${env.BUILD_NUMBER}".replaceAll('/', '-')
+                    // Correctly extract the service name (e.g., "book-service") from the job name
+                    // Assuming job name is like "book-service-pipeline" or "book-service"
+                    // If your job name is "book-service-pipeline/main", you might need a more robust regex or split
+                    // For simplicity, let's assume the job name is just "book-service-pipeline" or "book-service"
+                    // If your job name is "book-service-pipeline/main", you'll need to adjust this.
+                    // A safer way to get just the service name might be to define it explicitly or parse differently.
+                    // Let's assume the job name is 'book-service-pipeline' or 'book-service'
+                    def baseServiceName = env.JOB_NAME.toLowerCase().replace('-pipeline', '')
+
+                    // If your job name is 'book-service-pipeline/main', then baseServiceName will be 'book-service/main'.
+                    // We need to extract just 'book-service'. Let's refine this:
+                    def serviceNameParts = env.JOB_NAME.toLowerCase().split('/')
+                    def serviceName = serviceNameParts[0].replace('-pipeline', '') // Takes 'book-service-pipeline' and makes it 'book-service'
+
+                    // Create a unique image tag using branch name and build number
+                    // Ensure the branch name is sanitized for use in a Docker tag
+                    def sanitizedBranchName = env.BRANCH_NAME.replaceAll('[^a-zA-Z0-9_.-]', '-') // Replace non-tag-safe chars
+                    def imageTag = "${sanitizedBranchName == 'main' ? 'latest' : sanitizedBranchName}-${env.BUILD_NUMBER}".toLowerCase()
+
                     // Use the full dockerRegistry variable here
                     def dockerImageName = "${dockerRegistry}/${serviceName}:${imageTag}"
 
@@ -72,7 +89,10 @@ pipeline {
             }
             steps {
                 script {
-                    def serviceName = env.JOB_NAME.toLowerCase().replace('-pipeline', '')
+                    // Ensure serviceName here is also just "book-service"
+                    def serviceNameParts = env.JOB_NAME.toLowerCase().split('/')
+                    def serviceName = serviceNameParts[0].replace('-pipeline', '')
+
                     def namespace = "staging"
 
                     echo "Deploying ${serviceName} to Kubernetes staging cluster (${kubernetesContext})..."
