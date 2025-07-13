@@ -7,7 +7,7 @@ def dockerCredentialsId = "3bdc9f350d0642d19dec3a60aa1875b4" // Jenkins credenti
 def sonarqubeServerId = "SonarQube" // Jenkins SonarQube server configuration ID - REPLACE WITH YOUR ACTUAL JENKINS SONARQUBE SERVER NAME
 def sonarqubeCredentialsId = "sonarqube-server" // Jenkins credential ID for SonarQube access token
 def kubernetesCredentialsId = "kubernetes-credentials" // Jenkins credential ID for Kubernetes access (e.g., Kubeconfig)
-def kubernetesContext = "minikube" // Kubernetes context name for your staging cluster - REPLACE WITH YOUR ACTUAL K8S CONTEXT
+def kubernetesContext = "minikube" // Kubernetes context name for your staging cluster - REPLACE WITH YOUR ACTUAL K8s CONTEXT
 def helmChartPath = "helm/book-service-chart" // Path to book-service's Helm chart within its repository
 def dbPasswordCredentialId = "book-db-password" // Jenkins credential ID for book-service DB password (Secret Text)
 def dbUserCredentialId = "book-db-user" // Jenkins credential ID for book-service DB user (Secret Text) - OPTIONAL, if user is also secret
@@ -55,8 +55,8 @@ pipeline {
                     post {
                         // This 'always' block ensures quality gate check runs even if analysis fails
                         always {
-                            // Increased timeout to 10 minutes for SonarQube Quality Gate check
-                            timeout(time: 10, unit: 'MINUTES') {
+                            // Increased timeout to 15 minutes for SonarQube Quality Gate check
+                            timeout(time: 15, unit: 'MINUTES') { // <-- Increased timeout here
                                 // This step waits for the SonarQube Quality Gate result
                                 waitForQualityGate abortPipeline: true
                             }
