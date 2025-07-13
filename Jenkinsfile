@@ -28,20 +28,20 @@ pipeline {
 
         // ... other stages ...
 
-stage('Build and Test') {
-    parallel {
-        stage('Unit Tests') {
-            steps {
-                echo "Running Maven unit tests for Spring Boot book-service..."
-                sh 'mvn clean test' // Keep unit tests here
-            }
-            // You might want to add post-build actions for JUnit reports here if not already
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml' // Collect JUnit test results
+        stage('Build and Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        echo "Running Maven unit tests for Spring Boot book-service..."
+                        sh 'mvn clean test' // Keep unit tests here
+                    }
+                    // You might want to add post-build actions for JUnit reports here if not already
+                    post {
+                        always {
+                            junit '**/target/surefire-reports/*.xml' // Collect JUnit test results
+                        }
+                    }
                 }
-            }
-        }
         stage('Code Quality (SonarQube)') {
             steps {
                 echo "Running SonarQube analysis for Spring Boot book-service..."
@@ -59,11 +59,26 @@ stage('Build and Test') {
             }
         }
     }
-}
+    }
 
 // ... rest of your Jenkinsfile ...
 
-
+    
+    }
+    parallel {
+        stage('Unit Tests') {
+            steps {
+                echo "Running Maven unit tests for Spring Boot book-service..."
+                sh 'mvn clean test' // Keep unit tests here
+            }
+            // You might want to add post-build actions for JUnit reports here if not already
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml' // Collect JUnit test results
+                }
+            }
+        }
+        stage('Code Quality (SonarQube)') {
             steps {
                 echo "Running SonarQube analysis for Spring Boot book-service..."
                 // The withSonarQubeEnv wrapper injects the necessary environment variables
