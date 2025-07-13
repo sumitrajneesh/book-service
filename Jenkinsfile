@@ -55,7 +55,8 @@ pipeline {
                     post {
                         // This 'always' block ensures quality gate check runs even if analysis fails
                         always {
-                            timeout(time: 5, unit: 'MINUTES') {
+                            // Increased timeout to 10 minutes for SonarQube Quality Gate check
+                            timeout(time: 10, unit: 'MINUTES') {
                                 // This step waits for the SonarQube Quality Gate result
                                 waitForQualityGate abortPipeline: true
                             }
