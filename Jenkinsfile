@@ -86,7 +86,7 @@ stage('Build and Test') {
 }
 
 // ... rest of your Jenkinsfile ...
-            }
+            
         }
 
         stage('Build Docker Image') {
