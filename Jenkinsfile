@@ -26,23 +26,44 @@ pipeline {
             }
         }
 
-        stage('Build and Test') {
-            parallel {
-                stage('Unit Tests') {
-                    steps {
-                        echo "Running Maven unit tests for Spring Boot book-service..."
-                        sh "mvn clean test"
-                    }
-                    post {
-                        always {
-                            junit '**/target/surefire-reports/*.xml'
-                        }
+        // ... other stages ...
+
+stage('Build and Test') {
+    parallel {
+        stage('Unit Tests') {
+            steps {
+                echo "Running Maven unit tests for Spring Boot book-service..."
+                sh 'mvn clean test' // Keep unit tests here
+            }
+            // You might want to add post-build actions for JUnit reports here if not already
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml' // Collect JUnit test results
+                }
+            }
+        }
+        stage('Code Quality (SonarQube)') {
+            steps {
+                echo "Running SonarQube analysis for Spring Boot book-service..."
+                withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'sonarqube-server') {
+                    // THIS IS THE CRUCIAL PART: The sonar:sonar command must be INSIDE this block
+                    sh "mvn sonar:sonar -Dsonar.projectKey=book-service -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.login=${SONARQUBE_TOKEN}"
+                }
+            }
+            post {
+                always {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
                     }
                 }
+            }
+        }
+    }
+}
 
-                // ... other stages ...
+// ... rest of your Jenkinsfile ...
 
-        stage('Code Quality (SonarQube)') {
+
             steps {
                 echo "Running SonarQube analysis for Spring Boot book-service..."
                 // The withSonarQubeEnv wrapper injects the necessary environment variables
