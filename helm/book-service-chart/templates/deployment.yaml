@@ -15,8 +15,8 @@ spec:
         {{- include "book-service-chart.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        - name: {{ include "book-service-chart.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}" # Use values from values.yaml
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -25,13 +25,13 @@ spec:
           env:
             # Inject database connection details from Helm values
             - name: DB_HOST
-              value: {{ .Values.db.host | quote }}
+              value: {{ .Values.database.host | quote }} # Use value from values.yaml
             - name: DB_PORT
-              value: {{ .Values.db.port | quote }}
+              value: {{ .Values.database.port | quote }} # Use value from values.yaml
             - name: DB_NAME
-              value: {{ .Values.db.name | quote }}
+              value: {{ .Values.database.name | quote }} # Use value from values.yaml
             - name: DB_USER
-              value: {{ .Values.db.user | quote }}
+              value: {{ .Values.database.user | quote }} # Use value from values.yaml
             # IMPORTANT: For production, use a Kubernetes Secret for passwords!
             # You would create a Secret like this:
             # apiVersion: v1

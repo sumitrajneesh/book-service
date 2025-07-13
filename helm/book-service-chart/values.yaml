@@ -1,25 +1,39 @@
+nameOverride: ""
+fullnameOverride: ""
+
 replicaCount: 1
 
 image:
-  repository: your-docker-registry-or-dockerhub-username/book-service # This will be overridden by Jenkinsfile
+  repository: sumitrajneesh/book-service # Your actual Docker image
   pullPolicy: IfNotPresent
-  tag: "latest" # This will be overridden by Jenkinsfile
+  tag: "latest" # Or a specific version
 
 service:
   type: ClusterIP
-  port: 8080 # Spring Boot default port
+  port: 8080 # Book service's application port
 
-db: # Database connection details, overridden by Jenkinsfile
-  host: ""
+# Database connection details (for Kubernetes deployment)
+database:
+  host: book-service-postgresql # Replace with the actual Kubernetes Service name for your book-db PostgreSQL
   port: "5432"
-  name: ""
-  user: ""
-  password: ""
+  name: book_db # Your database name
+  user: bookuser # Your database user
+  # password will be fetched from a secret, as defined in deployment.yaml
+
+# You might also want to add liveness/readiness probe paths if not already templated
+# livenessProbe:
+#   path: /api/books/health
+#   initialDelaySeconds: 30
+#   periodSeconds: 10
+# readinessProbe:
+#   path: /api/books/health
+#   initialDelaySeconds: 10
+#   periodSeconds: 5
 
 resources: {}
   # limits:
-  #   cpu: 200m
-  #   memory: 512Mi
+  #   cpu: 100m
+  #   memory: 128Mi
   # requests:
   #   cpu: 100m
-  #   memory: 256Mi
+  #   memory: 128Mi
