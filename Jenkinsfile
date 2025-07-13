@@ -40,21 +40,31 @@ pipeline {
                     }
                 }
 
-                stage('Code Quality (SonarQube)') {
-                    steps {
-                        echo "Running SonarQube analysis for Spring Boot book-service..."
-                        withSonarQubeEnv(sonarqubeServerId) {
-                            sh "mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=${JOB_NAME} -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.login=${SONARQUBE_TOKEN}"
-                        }
-                    }
-                    post {
-                        always {
-                            timeout(time: 5, unit: 'MINUTES') {
-                                waitForQualityGate abortPipeline: true
-                            }
-                        }
-                    }
-                }
+                // ... other stages ...
+
+        stage('Code Quality (SonarQube)') {
+            steps {
+                echo "Running SonarQube analysis for Spring Boot book-service..."
+                // The withSonarQubeEnv wrapper injects the necessary environment variables
+                withSonarQubeEnv(credentialsId: 'sonarqube-server') {
+                // This 'sh' command MUST be inside the withSonarQubeEnv block
+                // Ensure you have the correct projectKey and host/login parameters
+                sh "mvn sonar:sonar -Dsonar.projectKey=book-service -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.login=${SONARQUBE_TOKEN}"
+            }
+    }
+    post {
+        // This 'always' block ensures quality gate check runs even if analysis fails
+        always {
+            timeout(time: 5, unit: 'MINUTES') {
+                // This step waits for the SonarQube Quality Gate result
+                // It needs to be outside the withSonarQubeEnv block, but within the stage's post section
+                waitForQualityGate abortPipeline: true
+            }
+        }
+    }
+}
+
+// ... rest of your Jenkinsfile ...
             }
         }
 
