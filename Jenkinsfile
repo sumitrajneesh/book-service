@@ -2,8 +2,9 @@
 // This file should be placed at the root of the book-service repository.
 
 // Define global environment variables
-def dockerRegistry = "sumitrajneesh" // e.g., "myusername" - REPLACE WITH YOUR DOCKER HUB USERNAME
-def dockerCredentialsId = "3bdc9f350d0642d19dec3a60aa1875b4" // Jenkins credential ID for Docker Hub/GitLab Registry
+// IMPORTANT: dockerRegistry should be the full registry path including your username for image naming
+def dockerRegistry = "docker.io/sumitrajneesh" // Correct format for Docker Hub: docker.io/your_username
+def dockerCredentialsId = "3bdc9f350d0642d19dec3a60aa1875b4" // Jenkins credential ID for Docker Hub
 def kubernetesCredentialsId = "kubernetes-credentials" // Jenkins credential ID for Kubernetes access (e.g., Kubeconfig)
 def kubernetesContext = "minikube" // Kubernetes context name for your staging cluster - REPLACE WITH YOUR ACTUAL K8s CONTEXT
 def helmChartPath = "helm/book-service-chart" // Path to book-service's Helm chart within its repository
@@ -28,8 +29,7 @@ pipeline {
         }
 
         stage('Build and Test') {
-            // Removed parallel as there's only one stage here now
-            steps { // Changed from parallel to steps as there's only one stage
+            steps {
                 echo "Running Maven unit tests for Spring Boot book-service..."
                 sh 'mvn clean test'
             }
@@ -44,11 +44,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Use env.JOB_NAME to get the pipeline name (e.g., "book-service-pipeline")
-                    // and then strip "-pipeline" to get "book-service"
                     def serviceName = env.JOB_NAME.toLowerCase().replace('-pipeline', '')
-                    // Create a unique image tag using branch name and build number
                     def imageTag = "${env.BRANCH_NAME == 'main' ? 'latest' : env.BRANCH_NAME}-${env.BUILD_NUMBER}".replaceAll('/', '-')
+                    // Use the full dockerRegistry variable here
                     def dockerImageName = "${dockerRegistry}/${serviceName}:${imageTag}"
 
                     echo "Building Docker image: ${dockerImageName}"
@@ -56,7 +54,8 @@ pipeline {
 
                     // Use withCredentials to securely inject Docker Hub username and password
                     withCredentials([usernamePassword(credentialsId: dockerCredentialsId, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin ${dockerRegistry.split('/')[0]}"
+                        // The docker login command should target the actual Docker Hub registry (docker.io)
+                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin docker.io"
                         echo "Pushing Docker image: ${dockerImageName}"
                         sh "docker push ${dockerImageName}"
                     }
@@ -98,13 +97,13 @@ pipeline {
 
                             echo "Upgrading/installing Helm chart for ${serviceName}..."
                             sh "helm upgrade --install ${serviceName} ${helmChartPath} --namespace ${namespace} " +
-                               "--set image.repository=${dockerRegistry}/${serviceName} " +
+                               "--set image.repository=${dockerRegistry}/${serviceName} " + // Use the full dockerRegistry here
                                "--set image.tag=${env.DOCKER_IMAGE.split(':')[-1]} " +
                                "--set database.host=${dbHost} " +
                                "--set database.port=${dbPort} " +
                                "--set database.name=${dbName} " +
                                "--set database.user=${dbUser} " +
-                               "--set database.password=${dbPassword} " + // Pass password directly if not using K8s secret for DB_PASSWORD env var
+                               "--set database.password=${dbPassword} " +
                                "--wait --timeout 5m"
 
                             echo "Deployment of ${serviceName} to staging completed."
