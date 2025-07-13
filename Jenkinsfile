@@ -46,7 +46,7 @@ pipeline {
             steps {
                 echo "Running SonarQube analysis for Spring Boot book-service..."
                 // The withSonarQubeEnv wrapper injects the necessary environment variables
-                withSonarQubeEnv(installationName: 'sonarqube-server', credentialsId: 'sonarqube-server') {
+                withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'sonarqube-server') {
                 // This 'sh' command MUST be inside the withSonarQubeEnv block
                 // Ensure you have the correct projectKey and host/login parameters
                 sh "mvn sonar:sonar -Dsonar.projectKey=book-service -Dsonar.host.url=${SONARQUBE_URL} -Dsonar.login=${SONARQUBE_TOKEN}"
