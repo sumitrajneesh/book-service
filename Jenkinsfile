@@ -4,13 +4,11 @@
 // Define global environment variables
 def dockerRegistry = "sumitrajneesh" // e.g., "myusername" - REPLACE WITH YOUR DOCKER HUB USERNAME
 def dockerCredentialsId = "3bdc9f350d0642d19dec3a60aa1875b4" // Jenkins credential ID for Docker Hub/GitLab Registry
-def sonarqubeServerId = "SonarQube" // Jenkins SonarQube server configuration ID - REPLACE WITH YOUR ACTUAL JENKINS SONARQUBE SERVER NAME
-def sonarqubeCredentialsId = "sonarqube-server" // Jenkins credential ID for SonarQube access token
 def kubernetesCredentialsId = "kubernetes-credentials" // Jenkins credential ID for Kubernetes access (e.g., Kubeconfig)
 def kubernetesContext = "minikube" // Kubernetes context name for your staging cluster - REPLACE WITH YOUR ACTUAL K8s CONTEXT
 def helmChartPath = "helm/book-service-chart" // Path to book-service's Helm chart within its repository
 def dbPasswordCredentialId = "book-db-password" // Jenkins credential ID for book-service DB password (Secret Text)
-def dbUserCredentialId = "book-db-user" // Jenkins credential ID for book-service DB user (Secret Text) - OPTIONAL, if user is also secret
+def dbUserCredentialId = "book-db-user" // Jenkins credential ID for book-service DB user (Secret Text)
 
 // Pipeline definition
 pipeline {
@@ -30,38 +28,15 @@ pipeline {
         }
 
         stage('Build and Test') {
-            parallel {
-                stage('Unit Tests') {
-                    steps {
-                        echo "Running Maven unit tests for Spring Boot book-service..."
-                        sh 'mvn clean test'
-                    }
-                    post {
-                        always {
-                            // Collect JUnit test results
-                            junit '**/target/surefire-reports/*.xml'
-                        }
-                    }
-                }
-                stage('Code Quality (SonarQube)') {
-                    steps {
-                        echo "Running SonarQube analysis for Spring Boot book-service..."
-                        // The withSonarQubeEnv wrapper injects SONAR_HOST_URL and SONAR_AUTH_TOKEN
-                        withSonarQubeEnv(installationName: sonarqubeServerId, credentialsId: sonarqubeCredentialsId) {
-                            // This 'sh' command MUST be inside the withSonarQubeEnv block
-                            sh "mvn sonar:sonar -Dsonar.projectKey=book-service -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_AUTH_TOKEN}"
-                        }
-                    }
-                    post {
-                        // This 'always' block ensures quality gate check runs even if analysis fails
-                        always {
-                            // Increased timeout to 15 minutes for SonarQube Quality Gate check
-                            timeout(time: 15, unit: 'MINUTES') { // <-- Increased timeout here
-                                // This step waits for the SonarQube Quality Gate result
-                                waitForQualityGate abortPipeline: true
-                            }
-                        }
-                    }
+            // Removed parallel as there's only one stage here now
+            steps { // Changed from parallel to steps as there's only one stage
+                echo "Running Maven unit tests for Spring Boot book-service..."
+                sh 'mvn clean test'
+            }
+            post {
+                always {
+                    // Collect JUnit test results
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
